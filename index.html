@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Next Block Prediction: Video Generation via Semi-Autoregressive Modeling">
+  <meta name="keywords" content="Video Generation, Autoregressive Language Models">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Next Block Prediction: Video Generation via Semi-Autoregressive Modeling</title>
+
+  <!-- Google tag (gtag.js) -->
+<!--   <script async src="https://www.googletagmanager.com/gtag/js?id=G-QCJY998LVV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  
+    gtag('config', 'G-QCJY998LVV');
+  </script> -->
+  
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+
+  <style>
+    .card-image video {
+      width: 150%;
+      height: 150%;
+      object-fit: cover;
+    }
+    .gif-card .card-image {
+      padding: 0;
+      display: flex;
+      justify-content: center;
+    }
+    .gif-card .card-image img {
+      object-fit: cover;
+    }
+    .gif-card .card-content {
+      width: 100%;
+    }
+    .smaller-text {
+      font-size: 0.8rem;
+    }
+    .smallest-text {
+      font-size: 0.5rem;
+    }
+    .section-divider {
+    border-top: 1px solid #dbdbdb;
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+  }
+  .wider-video-container {
+    max-width: 1600px !important;  /* Increase this value to make the container wider */
+    width: 90% !important;  /* This ensures some margin on very wide screens */
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .wider-column {
+    padding: 0.75rem;
+  }
+    
+  </style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Next Block Prediction: Video Generation via Semi-Autoregressive Modeling</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block has-text-centered">
+              <a href="https://renshuhuai-andy.github.io/">Shuhuai Ren</a><sup>1</sup>,
+              <a href="https://scholar.google.com/citations?user=J44tjDMAAAAJ">Shuming Ma</a><sup>2</sup>,
+              <a href="https://xusun26.github.io/">Xu Sun</a><sup>1</sup><a href="#"><i class="fas fa-envelope"></i></a>,
+              <a href="https://thegenerality.com/">Furu Wei</a><sup>2</sup><a href="#"><i class="fas fa-envelope"></i></a><br><br>
+              <sup>1</sup>Peking University, <sup>2</sup>Microsoft Research
+            </span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- Arxiv Link. -->
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2410.02757" target="_blank">
+                  <span class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                    </span>
+                    <span>arXiv</span>
+                  </span>
+                </a>
+              </span>
+
+                <span class="link-block">
+                <a href="https://github.com/RenShuhuai-Andy/NBP" target="_blank">
+                  <span class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fab fa-github"></i>
+                    </span>
+                    <span>Code</span>
+                  </span>
+                </a>
+              </span>
+
+                <span class="link-block">
+                <a href="https://huggingface.co/collections/ShuhuaiRen/next-block-prediction-6706660de8bff30c00e8ce95" target="_blank">
+                  <span class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fas fa-share-square"></i>
+                    </span>
+                    <span>Model</span>
+                  </span>
+                </a>
+              </span>
+
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+              Next-Token Prediction (NTP) is a de facto approach for autoregressive (AR) video generation, but it suffers from suboptimal unidirectional dependencies and slow inference speed. In this work, we propose a semi-autoregressive (semi-AR) framework, called Next-Block Prediction (NBP), for video generation. By uniformly decomposing video content into equal-sized blocks (e.g., rows or frames), we shift the generation unit from individual tokens to blocks, allowing each token in the current block to simultaneously predict the corresponding token in the next block. Unlike traditional AR modeling, our framework employs bidirectional attention within each block, enabling tokens to capture more robust spatial dependencies. By predicting multiple tokens in parallel, NBP models significantly reduce the number of generation steps, leading to faster and more efficient inference. Our model achieves FVD scores of 55.0 on UCF101 and 25.5 on K600, outperforming the vanilla NTP model by an average of <b>4.4</b>. Furthermore, thanks to the reduced number of inference steps, the NBP model generates 8.89 frames (128x128 resolution) per second, achieving an <b>11×</b> speedup in inference. We also explored model scales ranging from 700M to 3B parameters, observing significant improvements in generation quality, with FVD scores dropping from 25.5 to 19.5 on K600, demonstrating the scalability of our approach.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+
+    <!-- Framework. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Approach</h2>
+        <div class="content has-text-centered">
+          <img src="static/images/framework.png" alt="Framework" width="100%">
+        </div>
+        <div class="content has-text-justified">
+          <p>
+            Given the input text tokens, the model predict video tokens autoregressively. All the text and video information is formulated into a unidirectional discrete token sequence, where the model predicts the next token based on the previous tokens. Video Tokenizer is utlized to convert video frames into discrete video tokens. We follow a progressive training pipeline to train on long videos. 
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Framework. -->
+
+    <!-- Results. -->
+      <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">NTP v.s. NBP</h2>
+        <div class="content has-text-centered">
+          <img src="static/images/ar_vs_semiar.png" alt="Framework" width="100%">
+        </div>
+        <div class="content has-text-justified">
+          <p>
+              Comparison of next-token prediction (NTP) and next-block prediction (NBP) models in terms of performance and speed, evaluated on the K600 dataset (5-frame condition, 12 frames (768 tokens) to predict). Inference time was measured on a single A100 Nvidia GPU. All models are implemented by us under the same setting and trained for 20 epochs. FPS denotes ``frame per second''. The measurement of inference speed includes tokenization and de-tokenization processes. KV-cache is used for both models.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Benchmarking with Previous Systems</h2>
+        <div class="content has-text-centered">
+          <img src="static/images/main.png" alt="Framework" width="100%">
+        </div>
+        <div class="content has-text-justified">
+          <p>
+              Comparions of class-conditional generation results on UCF-101 and frame prediction results on K600. MTM indicates mask token modeling. Our model on K600 is trained for 77 epochs, we gray out models that use significantly more training computation (e.g., those trained for over 300 epochs) for a fair comparison.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Results. -->
+  </div>
+</section>
+
+
+
+<section class="section">
+  <div class="wider-video-container">
+  <!-- <div class="container is-max-desktop"> -->
+  <!-- <div class="container is-max-desktop"> -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+
+<!--        &lt;!&ndash; Reconstructed Videos using the iscrete video tokenizer &ndash;&gt;-->
+<!--        <h2 class="title is-3">Reconstructed Videos using the Discrete Video Tokenizer</h2>-->
+<!--        <p class="subtitle is-6 mb-4">Left: original video, Right: reconstructed video</p>-->
+<!--        <div class="columns is-multiline">-->
+<!--          <div class="column is-half">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/recons1.gif" alt="Reconstructed video 1">-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-half">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/recons2.gif" alt="Reconstructed video 2">-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-half">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/recons3.gif" alt="Reconstructed video 3">-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-half">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/recons4.gif" alt="Reconstructed video 4">-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-half">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/recons5.gif" alt="Reconstructed video 5">-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-half">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/recons6.gif" alt="Reconstructed video 6">-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div class="content has-text-justified">-->
+<!--          <p>-->
+<!--            The discrete video tokenizer is utilized to convert the raw video frames into compact discrete tokens, which can then be processed by the autoregressive language model. The tokenizer is trained using a 3D causal CNN architecture, where the encoder maps the video frames into discrete codes, and the decoder reconstructs the original frames from the discrete tokens. The tokenizer can significantly compress the data size. For example, given a 17x128x128 video clip, we compress it by 4 times in the temporal dimension and 8 times in the spatial dimensions (height and width). This allows us to represent the clip using only 256x5 tokens. The GIFs above show the reconstruction quality of videos from the WebVid dataset after compression by our tokenizer. -->
+<!--          </p>-->
+<!--        </div>-->
+<!--        &lt;!&ndash;/ Reconstructed videos using the discrete video tokenizer &ndash;&gt;-->
+
+<!--        <div class="section-divider"></div>-->
+
+        <!-- Generated Low Resolution Videos with High Motion -->
+        <h2 class="title is-3">Class-conditional Video Generation (UCF-101, 128x128)</h2>
+        <div class="columns is-multiline">
+          <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/fencing_986.gif" alt="A happy elephant wearing a birthday hat walking under the sea">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">fencing</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/golf_swing_1519.gif" alt="">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">golf swing</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/blowing_candles_235.gif" alt="">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">blowing candles</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/bowling_329.gif" alt="">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">bowling</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/brushing_teeth_386.gif" alt="">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">brushing teeth</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/cliff_diving_281.gif" alt="">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">cliff diving</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/cutting_in_kitchen_101.gif" alt="">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">cutting in kitchen</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/bench_press_119.gif" alt="">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">bench press</p>
+                </div>
+              </div>
+            </div>
+          </div>
+            <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/baseball_pitch_51.gif" alt="">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">baseball pitch</p>
+                </div>
+              </div>
+            </div>
+          </div>
+            <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/apply_eye_makeup_151.gif" alt="">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">apply eye makeup</p>
+                </div>
+              </div>
+            </div>
+          </div>
+            <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/apply_lipstick_1024.gif" alt="">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">apply lipstick</p>
+                </div>
+              </div>
+            </div>
+          </div>
+            <div class="column is-one-quarter">
+            <div class="card gif-card">
+              <div class="card-image">
+                <img src="videos/boxing_punching_bag_258.gif" alt="">
+              </div>
+              <div class="card-content">
+                <div class="content">
+                  <p class="smaller-text">boxing punching bag</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!--/ Generated Low Resolution Videos with High Motion -->
+
+<!--      <h2 class="title is-3">Video Frame Prediction (K600 dataset)</h2>-->
+<!--        <div class="columns is-multiline">-->
+<!--          <div class="column is-one-quarter">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/A_happy_elephant_wearing_a_birthday_hat_walking_under_the_sea.gif" alt="A happy elephant wearing a birthday hat walking under the sea">-->
+<!--              </div>-->
+<!--              <div class="card-content">-->
+<!--                <div class="content">-->
+<!--                  <p class="smaller-text">A happy elephant wearing a birthday hat walking under the sea</p>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-one-quarter">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/A_big_futuristic_robot_walking_in_post_apocalypse_world.gif" alt="">-->
+<!--              </div>-->
+<!--              <div class="card-content">-->
+<!--                <div class="content">-->
+<!--                  <p class="smaller-text">A big futuristic robot walking in post apocalypse world</p>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-one-quarter">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/cat.gif" alt="">-->
+<!--              </div>-->
+<!--              <div class="card-content">-->
+<!--                <div class="content">-->
+<!--                  <p class="smaller-text">A white and orange tabby cat is seen happily darting through a dense garden, as if chasing something.</p>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-one-quarter">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/A_bear_is_giving_a_presentation_in_classroom.gif" alt="">-->
+<!--              </div>-->
+<!--              <div class="card-content">-->
+<!--                <div class="content">-->
+<!--                  <p class="smaller-text">A bear is giving a presentation in classroom.</p>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-one-quarter">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/astronaut.gif" alt="">-->
+<!--              </div>-->
+<!--              <div class="card-content">-->
+<!--                <div class="content">-->
+<!--                  <p class="smaller-text">An astronaut typing on a keyboard, arc shot.</p>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-one-quarter">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/Teddy_bear_walking_down_5th_Avenue,_front_view,_beautiful_sunset.gif" alt="">-->
+<!--              </div>-->
+<!--              <div class="card-content">-->
+<!--                <div class="content">-->
+<!--                  <p class="smaller-text">Teddy bear walking down 5th Avenue, front view, beautiful sunset.</p>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-one-quarter">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/Red_sports_car_coming_around_a_bend_in_a_mountain_road.gif" alt="">-->
+<!--              </div>-->
+<!--              <div class="card-content">-->
+<!--                <div class="content">-->
+<!--                  <p class="smaller-text">Red sports car coming around a bend in a mountain road.</p>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="column is-one-quarter">-->
+<!--            <div class="card gif-card">-->
+<!--              <div class="card-image">-->
+<!--                <img src="videos/Drone_view_of_waves_crashing_against_the_rugged_cliffs_along_Big_Sur’s_garay_point_beach.gif" alt="">-->
+<!--              </div>-->
+<!--              <div class="card-content">-->
+<!--                <div class="content">-->
+<!--                  <p class="smaller-text">Drone view of waves crashing against the rugged cliffs along Big Sur’s garay point beach.</p>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+
+      </div>
+    </div>
+  </div>  
+</section>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@article{ren2024nbp,
+      title={Next Block Prediction: Video Generation via Semi-Autoregressive Modeling},
+<!--      author={Wang, Yuqing and Xiong, Tianwei and Zhou, Daquan and Lin, Zhijie and Zhao, Yang and Kang, Bingyi and Feng, Jiashi and Liu, Xihui},-->
+<!--      journal={arXiv preprint arXiv:2410.02757},-->
+      year={2024}
+}
+</code></pre>
+  </div>
+</section>
+  
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            The template is borrowed from <a href="https://nerfies.github.io/">Nerfies</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
