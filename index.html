@@ -35,6 +35,8 @@
   <script src="./static/js/bulma-slider.min.js"></script>
   <script src="./static/js/index.js"></script>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
   <style>
     .card-image video {
       width: 150%;
@@ -71,6 +73,12 @@
   }
   .wider-column {
     padding: 0.75rem;
+  }
+  .my-yellow {
+      color: rgb(248, 236, 198);
+  }
+  .my-green {
+      color: rgb(197, 224, 180);
   }
     
   </style>
@@ -146,7 +154,7 @@
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
-              Next-Token Prediction (NTP) is a de facto approach for autoregressive (AR) video generation, but it suffers from suboptimal unidirectional dependencies and slow inference speed. In this work, we propose a semi-autoregressive (semi-AR) framework, called Next-Block Prediction (NBP), for video generation. By uniformly decomposing video content into equal-sized blocks (e.g., rows or frames), we shift the generation unit from individual tokens to blocks, allowing each token in the current block to simultaneously predict the corresponding token in the next block. Unlike traditional AR modeling, our framework employs bidirectional attention within each block, enabling tokens to capture more robust spatial dependencies. By predicting multiple tokens in parallel, NBP models significantly reduce the number of generation steps, leading to faster and more efficient inference. Our model achieves FVD scores of 55.0 on UCF101 and 25.5 on K600, outperforming the vanilla NTP model by an average of <b>4.4</b>. Furthermore, thanks to the reduced number of inference steps, the NBP model generates 8.89 frames (128x128 resolution) per second, achieving an <b>11×</b> speedup in inference. We also explored model scales ranging from 700M to 3B parameters, observing significant improvements in generation quality, with FVD scores dropping from 25.5 to 19.5 on K600, demonstrating the scalability of our approach.
+            Next-Token Prediction (NTP) is a de facto approach for autoregressive (AR) video generation, but it suffers from suboptimal unidirectional dependencies and slow inference speed. In this work, we propose a semi-autoregressive (semi-AR) framework, called <b>Next-Block Prediction (NBP)</b>, for video generation. By uniformly decomposing video content into equal-sized blocks (e.g., rows or frames), we shift the generation unit from individual tokens to blocks, <b>allowing each token in the current block to simultaneously predict the corresponding token in the next block</b>. Unlike traditional AR modeling, our framework employs bidirectional attention within each block, enabling tokens to capture more robust spatial dependencies. By predicting multiple tokens in parallel, NBP models significantly reduce the number of generation steps, leading to <b>faster and more efficient inference</b>. Our model achieves FVD scores of 103.3 on UCF101 and 25.5 on K600, outperforming the vanilla NTP model by an average of <b>4.4</b>. Furthermore, thanks to the reduced number of inference steps, the NBP model generates 8.89 frames (128x128 resolution) per second, achieving an <b>11x</b> speedup. We also explored model scales ranging from 700M to 3B parameters, observing significant improvements in generation quality, with FVD scores dropping from 103.3 to <b>55.3 on UCF101</b> and from 25.5 to <b>19.5 on K600</b>, demonstrating the scalability of our approach.
           </p>
         </div>
       </div>
@@ -158,11 +166,22 @@
       <div class="column is-four-fifths">
         <h2 class="title is-3">Approach</h2>
         <div class="content has-text-centered">
+          <img src="static/images/block.png" alt="Framework" width="100%">
+        </div>
+        <div class="content has-text-justified">
+          <p>
+            <b>Left:</b> 3D discrete token map produced by our video tokenizer. The input video consists of one initial frame, followed by \(n\) clips, with each clip containing \(F_T\) frames.
+            <b>Right:</b> Examples of block include token-wise, row-wise, and frame-wise representations. When the block size is set to 1x1x1, it degenerates into a token, as used in vanilla AR modeling. Note that the actual token corresponds to a 3D cube, we omit the time dimension here for clarity.
+          </p>
+        </div>
+
+        <div class="content has-text-centered">
           <img src="static/images/framework.png" alt="Framework" width="100%">
         </div>
         <div class="content has-text-justified">
           <p>
-            Given the input text tokens, the model predict video tokens autoregressively. All the text and video information is formulated into a unidirectional discrete token sequence, where the model predicts the next token based on the previous tokens. Video Tokenizer is utlized to convert video frames into discrete video tokens. We follow a progressive training pipeline to train on long videos. 
+            Comparison between a vanilla autoregressive (AR) framework based on next-token prediction (left) and our semi-AR framework based on next-block prediction (right). \(x^{(i)}_{j}\) indicates the \(j^{th}\) video token in the \(i^{th}\) block, with each block containing \(L\) tokens.
+The dashed line in the right panel presents that the \(L\) tokens generated in the current step are duplicated and concatenated with prefix tokens, forming the input for the next step's prediction during inference.
           </p>
         </div>
       </div>
@@ -174,7 +193,7 @@
       <div class="column is-four-fifths">
         <h2 class="title is-3">NTP v.s. NBP</h2>
         <div class="content has-text-centered">
-          <img src="static/images/ar_vs_semiar.png" alt="Framework" width="100%">
+          <img src="static/images/ar_vs_semiar.png" alt="NTP v.s. NBP" width="100%">
         </div>
         <div class="content has-text-justified">
           <p>
@@ -188,11 +207,26 @@
       <div class="column is-four-fifths">
         <h2 class="title is-3">Benchmarking with Previous Systems</h2>
         <div class="content has-text-centered">
-          <img src="static/images/main.png" alt="Framework" width="100%">
+          <img src="static/images/main.png" alt="Main" width="100%">
         </div>
         <div class="content has-text-justified">
           <p>
               Comparions of class-conditional generation results on UCF-101 and frame prediction results on K600. MTM indicates mask token modeling. Our model on K600 is trained for 77 epochs, we gray out models that use significantly more training computation (e.g., those trained for over 300 epochs) for a fair comparison.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Ablation Study</h2>
+        <div class="content has-text-centered">
+          <img src="static/images/ablation.png" alt="Ablation" width="100%">
+        </div>
+        <div class="content has-text-justified">
+          <p>
+            <b>Left:</b> Generation quality (FVD, lower is better) and inference speed (FPS, higher is better) of various block sizes from 1 to 256.
+            <b>Right:</b> Generation quality (FVD) of various block shape.
           </p>
         </div>
       </div>
